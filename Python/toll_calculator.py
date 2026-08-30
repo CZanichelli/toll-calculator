@@ -1,5 +1,6 @@
 from datetime import time
 from enum import Enum
+import holidays
 
 # Fee schedule per the city's requirements. Start inclusive, end exclusive.
 # The schedule differs from the C# original, see README.
@@ -37,9 +38,16 @@ TOLL_FREE_VEHICLES = frozenset({
 })
 
 
+SWEDISH_HOLIDAYS = holidays.Sweden()
+
+
 def fee_for_time(passage):
     t = passage.time()
     for start, end, fee in FEES:
         if start <= t < end:
             return fee
     return 0
+
+
+def is_toll_free_date(passage):
+    return passage.weekday() >= 5 or passage.date() in SWEDISH_HOLIDAYS

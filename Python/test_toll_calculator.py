@@ -1,13 +1,17 @@
-"""Tests for the fee schedule.
+"""Tests for the toll calculator.
 
-The date in these tests is arbitrary: fee_for_time only reads the
-time of day. Weekend and holiday handling is tested separately.
+The date in the fee-schedule tests is arbitrary: fee_for_time only
+reads the time of day. The date tests further down use specific dates
+on purpose.
 """
 
 
 from datetime import datetime
 
-from toll_calculator import fee_for_time
+from toll_calculator import fee_for_time, is_toll_free_date
+
+
+# --- Fee schedule ---
 
 
 def test_opening_interval_costs_8():
@@ -67,6 +71,23 @@ def test_seconds_within_interval_are_charged():
     assert fee_for_time(datetime(2026, 8, 31, 6, 29, 45)) == 8
 
 
+# --- Toll-free dates ---
+
+
+def test_saturday_is_toll_free():
+    assert is_toll_free_date(datetime(2026, 8, 29, 12, 0)) is True
+
+
+def test_monday_is_not_toll_free():
+    assert is_toll_free_date(datetime(2026, 8, 31, 12, 0)) is False
+
+
+def test_långfredagen_is_toll_free():
+    assert is_toll_free_date(datetime(2026, 4, 3, 12, 0)) is True
+
+
+def test_juldagen_is_toll_free():
+    assert is_toll_free_date(datetime(2026, 12, 25, 12, 0)) is True
 
 
 
