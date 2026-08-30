@@ -1,0 +1,78 @@
+"""Tests for the fee schedule.
+
+The date in these tests is arbitrary: fee_for_time only reads the
+time of day. Weekend and holiday handling is tested separately.
+"""
+
+
+from datetime import datetime
+
+from toll_calculator import fee_for_time
+
+
+def test_opening_interval_costs_8():
+    assert fee_for_time(datetime(2026, 8, 31, 6, 0)) == 8
+
+
+def test_morning_light_traffic_0630_costs_13():
+    assert fee_for_time(datetime(2026, 8, 31, 6, 30)) == 13
+
+
+def test_morning_rush_0700_costs_18():
+    assert fee_for_time(datetime(2026, 8, 31, 7, 0)) == 18
+
+
+def test_morning_rush_0730_costs_18():
+    assert fee_for_time(datetime(2026, 8, 31, 7, 30)) == 18
+
+
+
+def test_late_morning_0800_costs_13():
+    assert fee_for_time(datetime(2026, 8, 31, 8, 0)) == 13
+
+
+def test_midday_traffic_0830_costs_8():
+    assert fee_for_time(datetime(2026, 8, 31, 8, 30)) == 8
+
+
+def test_afternoon_light_traffic_1500_costs_13():
+    assert fee_for_time(datetime(2026, 8, 31, 15, 0)) == 13
+
+
+def test_afternoon_rush_1530_costs_18():
+    assert fee_for_time(datetime(2026, 8, 31, 15, 30)) == 18
+
+
+def test_evening_light_traffic_1700_costs_13():
+    assert fee_for_time(datetime(2026, 8, 31, 17, 0)) == 13
+
+
+def test_evening_closing_1800_costs_8():
+    assert fee_for_time(datetime(2026, 8, 31, 18, 0)) == 8
+
+
+def test_no_fee_after_closing_1830():
+    assert fee_for_time(datetime(2026, 8, 31, 18, 30)) == 0
+
+
+def test_no_fee_at_night_2200():
+    assert fee_for_time(datetime(2026, 8, 31, 22, 0)) == 0
+
+
+def test_0915_is_charged_not_free():
+    assert fee_for_time(datetime(2026, 8, 31, 9, 15)) == 8
+
+
+def test_seconds_within_interval_are_charged():
+    assert fee_for_time(datetime(2026, 8, 31, 6, 29, 45)) == 8
+
+
+
+
+
+
+
+
+
+
+
