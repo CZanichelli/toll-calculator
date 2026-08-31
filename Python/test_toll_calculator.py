@@ -8,7 +8,12 @@ on purpose.
 
 from datetime import datetime
 
-from toll_calculator import fee_for_time, is_toll_free_date
+from toll_calculator import (
+    VehicleType,
+    calculate_daily_fee,
+    fee_for_time,
+    is_toll_free_date,
+)
 
 
 # --- Fee schedule ---
@@ -82,7 +87,7 @@ def test_monday_is_not_toll_free():
     assert is_toll_free_date(datetime(2026, 8, 31, 12, 0)) is False
 
 
-def test_långfredagen_is_toll_free():
+def test_langfredagen_is_toll_free():
     assert is_toll_free_date(datetime(2026, 4, 3, 12, 0)) is True
 
 
@@ -90,7 +95,70 @@ def test_juldagen_is_toll_free():
     assert is_toll_free_date(datetime(2026, 12, 25, 12, 0)) is True
 
 
+# --- Daily fee ---
 
+
+def test_single_passage_is_charged_once():
+    passages = [datetime(2026, 8, 31, 7, 30)]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 18
+
+
+def test_two_passages_within_an_hour_charge_the_highest():
+    passages = [
+        datetime(2026, 8, 31, 6, 15),
+        datetime(2026, 8, 31, 6, 45),
+    ]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 13
+
+
+def test_passages_in_separate_hours_are_added():
+    passages = [
+        datetime(2026, 8, 31, 6, 15),
+        datetime(2026, 8, 31, 9, 0),
+    ]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 16
+
+
+def test_hour_window_starts_at_first_passage():
+    passages = [
+        datetime(2026, 8, 31, 6, 15),
+        datetime(2026, 8, 31, 6, 45),
+        datetime(2026, 8, 31, 7, 10),
+        datetime(2026, 8, 31, 9, 0),
+    ]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 26
+
+
+def test_daily_fee_is_capped_at_60():
+    passages = [
+        datetime(2026, 8, 31, 6, 30),
+        datetime(2026, 8, 31, 7, 30),
+        datetime(2026, 8, 31, 15, 30),
+        datetime(2026, 8, 31, 17, 0),
+    ]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 60
+
+
+def test_unsorted_passages_give_the_same_result():
+    passages = [
+        datetime(2026, 8, 31, 9, 0),
+        datetime(2026, 8, 31, 6, 15),
+    ]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 16
+
+
+def test_toll_free_vehicle_pays_nothing():
+    passages = [datetime(2026, 8, 31, 7, 30)]
+    assert calculate_daily_fee(VehicleType.MOTORBIKE, passages) == 0
+
+
+def test_no_passages_costs_nothing():
+    assert calculate_daily_fee(VehicleType.CAR, []) == 0
+
+
+def test_weekend_costs_nothing():
+    passages = [datetime(2026, 8, 29, 7, 30)]
+    assert calculate_daily_fee(VehicleType.CAR, passages) == 0
 
 
 

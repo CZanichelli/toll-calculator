@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import time, timedelta
 from enum import Enum
 import holidays
 
@@ -14,7 +14,7 @@ FEES = [
     (time(15, 0), time(15, 30), 13),
     (time(15, 30), time(17, 0), 18),
     (time(17, 0), time(18, 0), 13),
-    (time(18, 0), time(18, 30), 8), 
+    (time(18, 0), time(18, 30), 8),
 ]
 
 
@@ -39,6 +39,7 @@ TOLL_FREE_VEHICLES = frozenset({
 
 
 SWEDISH_HOLIDAYS = holidays.Sweden()
+MAX_DAILY_FEE = 60
 
 
 def fee_for_time(passage):
@@ -51,3 +52,28 @@ def fee_for_time(passage):
 
 def is_toll_free_date(passage):
     return passage.weekday() >= 5 or passage.date() in SWEDISH_HOLIDAYS
+
+
+def calculate_daily_fee(vehicle_type, passages):
+    if vehicle_type in TOLL_FREE_VEHICLES:
+        return 0
+    if not passages:
+        return 0
+    ordered = sorted(passages)
+    if is_toll_free_date(ordered[0]):
+        return 0
+
+    total = 0
+    window_start = ordered[0]
+    window_max = fee_for_time(ordered[0])
+
+    for passage in ordered[1:]:
+        if passage - window_start < timedelta(hours=1):
+            window_max = max(window_max, fee_for_time(passage))
+        else:
+            total += window_max
+            window_start = passage
+            window_max = fee_for_time(passage)
+
+    total += window_max
+    return min(total, MAX_DAILY_FEE)
